@@ -5,8 +5,11 @@
 // @version     1
 // @grant       GM_xmlhttpRequest
 // ==/UserScript==
-"use strict";
+/* jshint undef: true, unused: true */
+/* globals GM_xmlhttpRequest */
 (function () {
+    "use strict";
+    
     try {
         var deezer = {
             makeRequest: function(url, callback) {
@@ -16,18 +19,17 @@
                     onload: function(response) {
                         callback(JSON.parse(response.responseText));
                     }
-                })
+                });
             },
-            getArtist(artistName, callback) {
+            getArtist: function(artistName, callback) {
                 var url = 'https://api.deezer.com/search/artist/?q=' + artistName + '&index=0&limit=5&output=json';
                 this.makeRequest(url, callback);
             },
-            getAlbum(albumName, callback) {
+            getAlbum: function(albumName, callback) {
                 var url = 'https://api.deezer.com/search/album/?q=' + albumName + '&index=0&limit=5&output=json';
                 this.makeRequest(url, callback);
             }
         };
-
 
         var editorsChoice = {
             getArtistName: function(choice) {
@@ -110,29 +112,29 @@
 
 
         var editorsChoices = document.getElementsByClassName('editors-choice');
-        var temp = document.getElementsByClassName('editors-choice');
+        var showLinkToDeezer = function(){
+            var currentChoice = this;
+            var linkAdder = new LinkAdder();
+
+            if(!linkAdder.linkAlreadyAdded(currentChoice)) {//ještě jsem ten link nepřidali
+                var albumName = editorsChoice.getAlbumName(currentChoice);
+                var artistName = editorsChoice.getArtistName(currentChoice);
+
+                deezer.getAlbum(albumName, function(json) {
+                    linkAdder.albumsJson = json;
+                    linkAdder.tryAddLinkToDeezer(currentChoice);
+                });
+
+                deezer.getArtist(artistName, function(json) {
+                    linkAdder.artistsJson = json;
+                    linkAdder.tryAddLinkToDeezer(currentChoice);
+                });
+            }
+        };
+
         for(var i = 0; i<editorsChoices.length;i++){
             var choice = editorsChoices[i];
-
-            choice.onmouseover=function(){
-                var currentChoice = this;
-                var linkAdder = new LinkAdder();
-
-                if(!linkAdder.linkAlreadyAdded(currentChoice)) {//ještě jsem ten link nepřidali
-                    var albumName = editorsChoice.getAlbumName(currentChoice);
-                    var artistName = editorsChoice.getArtistName(currentChoice);
-
-                    deezer.getAlbum(albumName, function(json) {
-                        linkAdder.albumsJson = json;
-                        linkAdder.tryAddLinkToDeezer(currentChoice);
-                    });
-
-                    deezer.getArtist(artistName, function(json) {
-                        linkAdder.artistsJson = json;
-                        linkAdder.tryAddLinkToDeezer(currentChoice);
-                    });
-                }
-            };
+            choice.onmouseover = showLinkToDeezer;
         }
     }
     catch(e){
